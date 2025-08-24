@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ইমেজ কনভার্টার — Multi‑Tool</title>
+  <style>
+    :root{
+      --blue:#1e90ff; /* Bright blue */
+      --blue-600:#1977d3;
+      --blue-100:#e8f2ff;
+      --bg:#ffffff;
+      --text:#0f172a;
+      --muted:#6b7280;
+      --ring: 0 0 0 3px rgba(30,144,255,.25);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Ubuntu, Cantarell, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color:var(--text);
+      background:linear-gradient(180deg, var(--blue-100), #fff 45%);
+    }
+    .container{
+      max-width:1100px;
+      margin:0 auto;
+      padding:clamp(16px, 3vw, 32px);
+    }
+    header{
+      display:flex;align-items:center;justify-content:space-between;
+      gap:12px;margin-bottom:16px;
+    }
+    .brand{
+      display:flex;align-items:center;gap:12px;
+    }
+    .logo{
+      width:44px;height:44px;border-radius:12px;
+      background: radial-gradient(80% 80% at 20% 20%, #fff 0%, var(--blue) 100%);
+      box-shadow:0 8px 24px rgba(30,144,255,.35);
+      border:2px solid #fff;
+    }
+    h1{font-size:clamp(20px,4vw,28px);margin:0;font-weight:800;letter-spacing:.2px}
+    .subtitle{color:var(--muted);font-size:14px}
+
+    .card{
+      background:var(--bg);
+      border:1px solid #e5e7eb;
+      border-radius:var(--radius);
+      box-shadow:0 10px 24px rgba(2,32,71,.06);
+      overflow:hidden;
+    }
+    .grid{
+      display:grid;gap:16px;
+      grid-template-columns:1.1fr .9fr;
+    }
+    @media (max-width: 920px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .panel{padding:18px 18px 20px}
+    .panel h2{margin:0 0 12px 0;font-size:18px}
+
+    .dropzone{
+      position:relative;display:grid;place-items:center;text-align:center;
+      border:2px dashed var(--blue);
+      background: #f8fbff;
+      padding:28px;border-radius:14px;transition:.15s ease;
+      cursor:pointer;
+    }
+    .dropzone:hover{box-shadow:var(--ring)}
+    .dropzone input{position:absolute;inset:0;opacity:0;cursor:pointer}
+    .dz-title{font-weight:700}
+    .dz-sub{color:var(--muted);font-size:13px}
+
+    .preview{
+      background:#fff;border:1px solid #eef2f7;border-radius:12px;
+      overflow:hidden;display:grid;grid-template-rows:auto 1fr;min-height:260px;
+    }
+    .preview-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--blue-100);border-bottom:1px solid #dbeafe}
+    .badge{background:var(--blue);color:#fff;font-weight:700;font-size:12px;padding:6px 10px;border-radius:999px}
+    .info{font-size:12px;color:var(--muted)}
+    .preview-body{display:grid;place-items:center;padding:12px}
+    .preview-body img{max-width:100%;height:auto;border-radius:10px}
+
+    .controls{
+      display:grid;gap:12px;margin-top:10px
+    }
+    .row{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+    @media (max-width:560px){.row{grid-template-columns:1fr}}
+    label{font-weight:600;font-size:14px}
+    select,input[type="number"],input[type="range"],input[type="text"]{
+      width:100%;padding:10px 12px;border-radius:12px;border:1px solid #e5e7eb;outline:none;transition:.15s ease;background:#fff
+    }
+    select:focus,input:focus{box-shadow:var(--ring);border-color:var(--blue)}
+    .range-wrap{display:grid;gap:6px}
+    .hint{font-size:12px;color:var(--muted)}
+
+    .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+    button{
+      appearance:none;border:0;border-radius:999px;padding:12px 16px;font-weight:800;cursor:pointer;transition:.15s ease
+    }
+    .btn-primary{background:var(--blue);color:#fff;box-shadow:0 10px 18px rgba(30,144,255,.35)}
+    .btn-primary:hover{background:var(--blue-600)}
+    .btn-ghost{background:#f1f5f9;color:#0f172a}
+
+    .meter{height:8px;border-radius:999px;background:#eef2f7;overflow:hidden}
+    .meter > span{display:block;height:100%;width:0;background:var(--blue);transition:width .25s ease}
+
+    footer{margin-top:18px;text-align:center;color:var(--muted);font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <h1>ইমেজ কনভার্টার</h1>
+          <div class="subtitle">উজ্জ্বল নীল + সাদা থিম • সম্পূর্ণ মোবাইল‑রেসপনসিভ</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="grid">
+        <!-- Left: Upload & Preview -->
+        <section class="panel">
+          <h2>ছবি আপলোড করুন</h2>
+          <label class="dropzone" id="dropzone">
+            <input id="fileInput" type="file" accept="image/*" aria-label="Upload image" />
+            <div>
+              <div class="dz-title">টেনে এনে ছেড়ে দিন বা ক্লিক করুন</div>
+              <div class="dz-sub">JPG • PNG • WebP • GIF • BMP • HEIC (ব্রাউজার সাপোর্ট অনুযায়ী)</div>
+            </div>
+          </label>
+
+          <div class="preview" id="preview" hidden>
+            <div class="preview-head">
+              <span class="badge" id="badge">Original</span>
+              <div class="info" id="meta">—</div>
+            </div>
+            <div class="preview-body">
+              <img id="imgPreview" alt="Uploaded preview" />
+            </div>
+          </div>
+        </section>
+
+        <!-- Right: Controls -->
+        <section class="panel">
+          <h2>কনভার্সন সেটিংস</h2>
+          <div class="controls">
+            <div class="row">
+              <div>
+                <label for="format">আউটপুট ফরম্যাট</label>
+                <select id="format">
+                  <option value="image/jpeg">JPEG (.jpg)</option>
+                  <option value="image/png">PNG (.png)</option>
+                  <option value="image/webp" selected>WebP (.webp)</option>
+                </select>
+              </div>
+              <div>
+                <label for="quality">গুণমান / কম্প্রেশন</label>
+                <div class="range-wrap">
+                  <input id="quality" type="range" min="0.1" max="1" step="0.05" value="0.8" />
+                  <div class="hint"><span id="qLabel">80%</span> (JPEG/WebP‑এ প্রযোজ্য)</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div>
+                <label for="maxW">সর্বোচ্চ চওড়া (px)</label>
+                <input id="maxW" type="number" min="1" placeholder="উদাহরণ: 1920" />
+              </div>
+              <div>
+                <label for="maxH">সর্বোচ্চ লম্বা (px)</label>
+                <input id="maxH" type="number" min="1" placeholder="উদাহরণ: 1080" />
+              </div>
+            </div>
+
+            <div>
+              <label class="hint">
+                আকার না দিলে ছবি আসল রেজোলিউশনে থাকবে। আকার দিলে অনুপাত (aspect) বজায় থাকবে।
+              </label>
+            </div>
+
+            <div class="actions">
+              <button class="btn-primary" id="convertBtn">কনভার্ট ও ডাউনলোড</button>
+              <button class="btn-ghost" id="resetBtn" type="button">রিসেট</button>
+            </div>
+
+            <div class="range-wrap">
+              <label>আনুমানিক সেভিংস</label>
+              <div class="meter" aria-hidden="true"><span id="savingBar"></span></div>
+              <div class="hint" id="sizeInfo">—</div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <footer>
+      তৈরি করা হয়েছে HTML • CSS • JavaScript দিয়ে — কোনো সার্ভার ছাড়াই সম্পূর্ণ ব্রাউজারে প্রসেস হয়।
+    </footer>
+  </div>
+
+  <canvas id="canvas" hidden></canvas>
+
+  <script>
+    const fileInput = document.getElementById('fileInput');
+    const dropzone = document.getElementById('dropzone');
+    const preview = document.getElementById('preview');
+    const imgPreview = document.getElementById('imgPreview');
+    const meta = document.getElementById('meta');
+    const badge = document.getElementById('badge');
+
+    const formatSel = document.getElementById('format');
+    const qRange = document.getElementById('quality');
+    const qLabel = document.getElementById('qLabel');
+    const maxW = document.getElementById('maxW');
+    const maxH = document.getElementById('maxH');
+
+    const convertBtn = document.getElementById('convertBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const savingBar = document.getElementById('savingBar');
+    const sizeInfo = document.getElementById('sizeInfo');
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    let originalFile = null;
+    let originalDataUrl = '';
+    let img = new Image();
+
+    // Utility: format bytes
+    function formatBytes(bytes){
+      if(!bytes && bytes !== 0) return '—';
+      const units=['B','KB','MB','GB'];
+      let i=0; let num=bytes;
+      while(num>=1024 && i<units.length-1){num/=1024;i++}
+      return `${num.toFixed(num<10 && i>0?2:0)} ${units[i]}`;
+    }
+
+    function updateQualityLabel(){
+      qLabel.textContent = Math.round(parseFloat(qRange.value)*100) + '%';
+    }
+    updateQualityLabel();
+    qRange.addEventListener('input', updateQualityLabel);
+
+    // Drag & drop handlers
+    ;['dragenter','dragover'].forEach(evt=>dropzone.addEventListener(evt,e=>{
+      e.preventDefault();
+      dropzone.style.boxShadow = 'var(--ring)';
+    }));
+    ;['dragleave','drop'].forEach(evt=>dropzone.addEventListener(evt, e=>{
+      e.preventDefault();
+      dropzone.style.boxShadow = '';
+    }));
+    dropzone.addEventListener('drop', (e)=>{
+      const f = e.dataTransfer.files?.[0];
+      if(f) handleFile(f);
+    });
+
+    fileInput.addEventListener('change', (e)=>{
+      const f = e.target.files?.[0];
+      if(f) handleFile(f);
+    });
+
+    function handleFile(file){
+      if(!file.type.startsWith('image/')){
+        alert('অনুগ্রহ করে একটি ইমেজ ফাইল দিন।');
+        return;
+      }
+      originalFile = file;
+      badge.textContent = 'Original';
+      const reader = new FileReader();
+      reader.onload = (ev)=>{
+        originalDataUrl = ev.target.result;
+        img = new Image();
+        img.onload = ()=>{
+          preview.hidden = false;
+          imgPreview.src = originalDataUrl;
+          meta.textContent = `${img.naturalWidth}×${img.naturalHeight}px • ${file.type || 'image'} • ${formatBytes(file.size)}`;
+          sizeInfo.textContent = 'কনভার্ট করলে আনুমানিক সাইজ এখানে দেখাবে।';
+          savingBar.style.width = '0%';
+        };
+        img.src = originalDataUrl;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function computeTargetSize(w,h){
+      const mw = parseInt(maxW.value,10);
+      const mh = parseInt(maxH.value,10);
+      if(!mw && !mh) return {w, h};
+      const aspect = w/h;
+      let tw = w, th = h;
+      if(mw && mh){
+        // Fit within box maintaining aspect
+        const scale = Math.min(mw/w || 1, mh/h || 1);
+        tw = Math.floor(w*scale); th = Math.floor(h*scale);
+      } else if(mw){
+        tw = Math.min(mw, w);
+        th = Math.floor(tw / aspect);
+      } else if(mh){
+        th = Math.min(mh, h);
+        tw = Math.floor(th * aspect);
+      }
+      return {w: Math.max(1, tw), h: Math.max(1, th)};
+    }
+
+    async function convertImage(download = true){
+      if(!originalFile || !img.complete){
+        alert('প্রথমে একটি ছবি আপলোড করুন।');
+        return;
+      }
+      const type = formatSel.value; // mime
+      const quality = parseFloat(qRange.value);
+
+      // Resize if needed
+      const {w, h} = computeTargetSize(img.naturalWidth, img.naturalHeight);
+      canvas.width = w; canvas.height = h;
+      ctx.clearRect(0,0,w,h);
+      ctx.drawImage(img, 0, 0, w, h);
+
+      // Create blob
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, type, (type==='image/png') ? undefined : quality));
+      if(!blob){
+        alert('কনভার্সনে সমস্যা হয়েছে।');
+        return;
+      }
+
+      // Update preview to converted version
+      const url = URL.createObjectURL(blob);
+      imgPreview.src = url;
+      badge.textContent = 'Converted';
+      meta.textContent = `${w}×${h}px • ${type.split('/')[1].toUpperCase()} • ${formatBytes(blob.size)}`;
+
+      // Savings meter
+      const original = originalFile.size || 1;
+      const converted = blob.size;
+      const saved = Math.max(0, original - converted);
+      const savedPct = Math.max(0, Math.min(100, Math.round((saved/original)*100)));
+      savingBar.style.width = savedPct + '%';
+      sizeInfo.textContent = `Original: ${formatBytes(original)} → Converted: ${formatBytes(converted)} (Saved ≈ ${savedPct}%)`;
+
+      if(download){
+        const a = document.createElement('a');
+        const base = (originalFile.name?.split('.').slice(0,-1).join('.') || 'image');
+        const ext = type.split('/')[1].replace('jpeg','jpg');
+        a.download = `${base}-converted.${ext}`;
+        a.href = url;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(()=>URL.revokeObjectURL(url), 2000);
+      }
+    }
+
+    convertBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      convertImage(true);
+    });
+
+    resetBtn.addEventListener('click', ()=>{
+      fileInput.value = '';
+      preview.hidden = true;
+      imgPreview.removeAttribute('src');
+      originalFile = null; originalDataUrl='';
+      sizeInfo.textContent='—';
+      savingBar.style.width = '0%';
+      badge.textContent='Original';
+      meta.textContent='—';
+      maxW.value=''; maxH.value='';
+      formatSel.value='image/webp';
+      qRange.value='0.8'; updateQualityLabel();
+    });
+
+    // Disable quality slider when PNG
+    function toggleQuality(){
+      const isPNG = formatSel.value === 'image/png';
+      qRange.disabled = isPNG;
+      qRange.style.opacity = isPNG ? .6 : 1;
+    }
+    formatSel.addEventListener('change', toggleQuality);
+    toggleQuality();
+  </script>
+</body>
+</html>
